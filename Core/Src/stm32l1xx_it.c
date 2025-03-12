@@ -25,6 +25,7 @@
 #include "adxl362.h"
 #include "stdio.h"
 #include "ICM.h"
+#include "angle2.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,7 +61,7 @@
 /* External variables --------------------------------------------------------*/
 
 /* USER CODE BEGIN EV */
-
+extern uint8_t counti;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -204,56 +205,53 @@ void SysTick_Handler(void)
 /**
   * @brief This function handles EXTI line[9:5] interrupts.
   */
-void EXTI9_5_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI9_5_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);
-  /* USER CODE END EXTI9_5_IRQn 0 */
-
-  /* USER CODE BEGIN EXTI9_5_IRQn 1 */
-
-  /* USER CODE END EXTI9_5_IRQn 1 */
-}
+//void EXTI9_5_IRQHandler(void)
+//{
+//  /* USER CODE BEGIN EXTI9_5_IRQn 0 */
+//  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);
+//  /* USER CODE END EXTI9_5_IRQn 0 */
+//  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);
+//  /* USER CODE BEGIN EXTI9_5_IRQn 1 */
+//printf("中断\n");
+//  /* USER CODE END EXTI9_5_IRQn 1 */
+//}
 
 /* USER CODE BEGIN 1 */
+
+//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+//	counti=1;
+//		if (GPIO_Pin == GPIO_PIN_9){
+//			uint8_t counti=0;
+//			while(counti<100)
+//				{
+//					
+//					ICM_GET_ANGLE();//获取ICM角度
+//					printf("ypl****************:\n");
+//					printf("roll:%f\npitch:%f\nyaw:%f\n",imu.roll,imu.pitch,imu.yaw);
+//					printf("ypl****************:\n");
+//				//	ICM_Read_Data(&Mydata);
+//				HAL_Delay(10);	
+//					counti++;
+//				}
+//		}
+		
+//}
+	
+
+
+//INT1中断读取加速度
 void EXTI3_IRQHandler(void)
 {
   
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
 
 }
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	
-//printf("触发中断\r\n");
-    if (GPIO_Pin == GPIO_PIN_9) {
-			HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_0);
-//			HAL_Delay(10);  // 适当的延时，确保数据更新
-			uint8_t x_l=ADXL362_ReadRegister(0x0E);
-			uint8_t x_h=ADXL362_ReadRegister(0x0F);
-			int16_t x=(x_h<<8) | x_l;
-			// 读取 Y 轴加速度
-			uint8_t y_l = ADXL362_ReadRegister(0x10);
-			uint8_t y_h = ADXL362_ReadRegister(0x11);
-			int16_t y = (y_h << 8) | y_l;
 
-			// 读取 Z 轴加速度
-			uint8_t z_l = ADXL362_ReadRegister(0x12);
-			uint8_t z_h = ADXL362_ReadRegister(0x13);
-			int16_t z = (z_h << 8) | z_l;
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 			
-			float x_s=(float)x*scale_factor;
-			float y_s=(float)y*scale_factor;
-			float z_s=(float)z*scale_factor;
-			printf("ADXL362加速度X：%f\nADXL362加速度Y：%f\nADXL362加速度Z：%f\r\n",x_s,y_s,z_s);
-			uint8_t state=ADXL362_ReadRegister(0x0B);
-			printf("ADXL362_state=%02x\r\n",state);
-    }
-		
 		if (GPIO_Pin == GPIO_PIN_3) {
 			HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_1);
-
-//			id=SPI_TransmitReceive(0x00);
-//			printf("id：%02x\r\n",id);
+			// 读取 X 轴加速度
 			uint8_t accel_x_h = ICM_ReadRegister(0x0B);  // 读取高8位
 			uint8_t accel_x_l = ICM_ReadRegister(0x0C);  // 读取低8位
 			int16_t accel_x = (int16_t)((accel_x_h << 8) | accel_x_l);  // 合并为 16 位有符号整数
@@ -290,11 +288,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 			
 			uint8_t ICM_status = ICM_ReadRegister(0x3A); // 读取中断状态寄存器
 			ICM_status = ICM_ReadRegister(0x3B); // 读取中断状态寄存器
-
-
+			ICM_status = ICM_ReadRegister(0x3C); // 读取Tilt状态寄存器
     }
 }
-
 
 
 /* USER CODE END 1 */

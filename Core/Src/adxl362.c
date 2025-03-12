@@ -1,5 +1,5 @@
 #include "adxl362.h"
-
+#include "icm.h"
 float scale_factor;
 void ADXL362_Init(void)
 {
@@ -32,13 +32,13 @@ void ADXL362_CS_Deselect(void)
     HAL_GPIO_WritePin(ADXL362_CS_PORT, ADXL362_CS_PIN, GPIO_PIN_SET);
 }
 
-uint8_t SPI_TransmitReceive(uint8_t data)
-{
-    uint8_t rxData = 0;
-    if(HAL_SPI_TransmitReceive(&hspi1, &data, &rxData, 1, HAL_MAX_DELAY)!=HAL_OK)
-			printf("SPI传输错误,传输值为:%02x\r\n",data);
-    return rxData;
-}
+//uint8_t SPI_TransmitReceive(uint8_t data)
+//{
+//    uint8_t rxData = 0;
+//    if(HAL_SPI_TransmitReceive(&hspi1, &data, &rxData, 1, HAL_MAX_DELAY)!=HAL_OK)
+//			printf("SPI传输错误,传输值为:%02x\r\n",data);
+//    return rxData;
+//}
 uint8_t ADXL362_ReadRegister(uint8_t reg)
 {
     uint8_t value;
@@ -125,7 +125,8 @@ void ADXL362_mode_wakeup(uint16_t threshold_ACT,uint8_t time_ACT,uint16_t thresh
 		ADXL362_WriteRegister(FILTER_CTL, 0x83);//+-8g范围
 		ADXL362_WriteRegister(POWER_CTL, 0x1A);//在唤醒模式下进行测量
 		
-		uint8_t range = ADXL362_ReadRegister(FILTER_CTL) & 0xC0;
+		uint8_t range = (ADXL362_ReadRegister(FILTER_CTL) & 0xC0)>>6;
+
 		switch(range){
 			case(0):
 				scale_factor=range_2g;

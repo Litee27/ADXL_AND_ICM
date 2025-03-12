@@ -1,0 +1,192 @@
+#include "ICM.h"
+
+
+float accler_sensitivity;
+void ICM_Init(void)
+{
+		GPIO_InitTypeDef GPIO_InitStruct ;
+
+	__HAL_RCC_GPIOC_CLK_ENABLE();  
+
+	GPIO_InitStruct.Pin = GPIO_PIN_13;   
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;  // 配置为复用推挽输出
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+	GPIO_InitStruct.Pull=GPIO_PULLUP;
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);  
+	
+}
+
+void ICM_CS_Select(void)
+{
+    HAL_GPIO_WritePin(ICM_CS_PORT, ICM_CS_PIN, GPIO_PIN_RESET);
+}
+
+void ICM_CS_Deselect(void)
+{
+    HAL_GPIO_WritePin(ICM_CS_PORT, ICM_CS_PIN, GPIO_PIN_SET);
+}
+uint8_t ICM_ReadRegister(uint8_t reg)
+{
+		uint8_t value;
+    ICM_CS_Select();
+    SPI_TransmitReceive(0x80|reg); // 读寄存器命令,最高位置1
+
+    value = SPI_TransmitReceive(0x00); // 读取值
+    ICM_CS_Deselect();
+    return value;
+}
+
+void ICM_WriteRegister(uint8_t reg, uint8_t value)
+{
+    ICM_CS_Select();
+    SPI_TransmitReceive(reg); // 写寄存器命令，最高位置0
+    SPI_TransmitReceive(value); // 写入值
+    ICM_CS_Deselect();
+}
+
+void ICM_MREG1_WriteRegister(uint8_t Maddr_w,uint8_t M_w)
+{
+		//// 切换到MREG1 Bank
+		ICM_WriteRegister(BLK_SEL_W, 0x00);  // BLK_SEL_W = 0x00 (MREG1)
+		ICM_WriteRegister(MADDR_W, Maddr_w);  
+		ICM_WriteRegister(M_W, M_w);  
+
+}
+uint8_t ICM_MREG1_ReadRegister(uint8_t Maddr_r)
+{
+		//// 切换到MREG1 Bank
+		ICM_WriteRegister(BLK_SEL_R, 0x00);  
+		ICM_WriteRegister(MADDR_R, Maddr_r);  
+		return ICM_ReadRegister(M_R);  
+
+}
+
+void ICM_MODE_WoM()
+{
+	printf("配置ICM为WoM模式\r\n");
+		ICM_WriteRegister(PWR_MGMT0, 0x12);  // PWR_MGMT0: ACCEL_MODE = LP Mode,低功耗模式
+		HAL_Delay(50);                  // 等待启动
+		
+		
+		// 配置X轴阈值（ACCEL_WOM_X_THR = 0x4B）
+		ICM_MREG1_WriteRegister(ACCEL_WOM_X_THR,0x32);
+
+		// 配置Y轴阈值（ACCEL_WOM_Y_THR = 0x4C）
+		ICM_MREG1_WriteRegister(ACCEL_WOM_Y_THR,0x32);
+
+		// 配置Z轴阈值（ACCEL_WOM_Z_THR = 0x4D）
+		ICM_MREG1_WriteRegister(ACCEL_WOM_Z_THR,0x32);
+
+
+		ICM_WriteRegister(GYRO_CONFIG0, 0x69);//陀螺仪配置
+		ICM_WriteRegister(ACCEL_CONFIG0, 0x6A);  // ACCEL_CONFIG0: FS=±2 g, ODR
+		ICM_WriteRegister(WOM_CONFIG, 0x03);  // WOM_CONFIG: 启用WoM，比较最初样本，OR模式,第一次过阈值事件时断言WoM中断
+		ICM_WriteRegister(INT_CONFIG,0x03);		//INT1脉冲模式
+		ICM_WriteRegister(INT_SOURCE1, 0x07);  // INT_SOURCE1: 使能XYZ轴中断到INT1
+
+		
+		uint8_t who_am_i = ICM_ReadRegister(WHO_AM_I);
+		if(who_am_i != 0x67) {
+				// 处理错误：检查硬件连接、电源、SPI/I2C配置
+			printf("who_am_i != 0x67\r\n");
+
+		}
+		
+		uint8_t icm_range = (ICM_ReadRegister(ACCEL_CONFIG0)&0x60)>>5;
+		switch(icm_range){
+			case(0):
+				accler_sensitivity=ACCELER_SENSITIVITY_16;
+			case(1):
+				accler_sensitivity=ACCELER_SENSITIVITY_8;
+			case(2):
+				accler_sensitivity=ACCELER_SENSITIVITY_4;
+			case(3):
+				accler_sensitivity=ACCELER_SENSITIVITY_2;
+		}
+		
+//		ICM_WriteRegister(PWR_MGMT0, 0x02); 
+}
+void ICM_MODE_Sleep(void)
+{
+	ICM_WriteRegister(PWR_MGMT0, 0x00);  // PWR_MGMT0: ACCEL_MODE
+//	ICM_WriteRegister(INT_CONFIG,0x00);		//INT1
+//	ICM_WriteRegister(WOM_CONFIG, 0x00);
+//	ICM_WriteRegister(ACCEL_CONFIG0, 0x00);
+//	ICM_WriteRegister(INT_SOURCE1, 0x00);
+//	ICM_WriteRegister(INT_SOURCE0, 0x00);
+//	ICM_WriteRegister(INT_SOURCE3, 0x00);
+//	ICM_WriteRegister(0x28, 0x40);	
+//	ICM_WriteRegister(INT_SOURCE3, 0x00);
+//	ICM_MREG1_WriteRegister(0x06,0x40);
+//	ICM_ReadRegister(0x3A);
+//	ICM_ReadRegister(0x3B);
+//	ICM_ReadRegister(0x3C);
+////	ICM_WriteRegister(PWR_MGMT0, 0x00);  // PWR_MGMT0: ACCEL_MODE
+//ICM_MREG1_WriteRegister(SENSOR_CONFIG3,0x40);//关闭APEX
+	
+}
+void ICM_MODE_Standby(void)
+{
+	ICM_WriteRegister(PWR_MGMT0, 0x04);
+	ICM_WriteRegister(GYRO_CONFIG0, 0x69);//陀螺仪配置
+	
+}
+
+void ICM_MODE_APEX_WAKE(void)
+{
+	ICM_MODE_Sleep();
+	ICM_MREG1_WriteRegister(SENSOR_CONFIG3,0x00);//保持APEX开启
+	ICM_WriteRegister(ACCEL_CONFIG0, 0x6B);  // ACCEL_CONFIG0: FS=±2 g, ODR=25Hz,DMP_ODR应小于ACCEL_ODR
+	/*以下配置需要按照顺序进行*/
+	ICM_WriteRegister(APEX_CONFIG1,0x00);//设置DMP_ODR=25Hz需要先关闭所有APEX功能，
+	ICM_WriteRegister(APEX_CONFIG1,0x00);//设置DMP_ODR=25Hz需要先关闭所有APEX功能，
+	ICM_WriteRegister(APEX_CONFIG0,0x04);//DMP_Init_En
+	while(!(ICM_ReadRegister(APEX_CONFIG0)&0x04))
+	{
+		printf("等待DMP_Init_En设置完成.\r\n");
+	}
+	ICM_WriteRegister(APEX_CONFIG1,0x08);//打开需要的APEX功能
+	
+	
+	ICM_WriteRegister(INT_CONFIG,0x03);		//INT1脉冲模式
+	ICM_WriteRegister(INT_SOURCE1, 0x08);  // INT_SOURCE1: 显著运动检测
+//	ICM_WriteRegister(WOM_CONFIG, 0x03);  // WOM_CONFIG: 启用WoM，比较最初样本，OR模式,第一次过阈值事件时断言WoM中断
+	
+//	ICM_MREG1_WriteRegister(APEX_CONFIG2,0xA1);//行走检测
+//	ICM_MREG1_WriteRegister(APEX_CONFIG3,0x01);//行走检测灵敏度
+//	ICM_MREG1_WriteRegister(APEX_CONFIG4,0x51);//行走检测配置
+	
+//	ICM_MREG1_WriteRegister(APEX_CONFIG5,0x80);//倾斜、低g、高g检测配置
+//	ICM_MREG1_WriteRegister(APEX_CONFIG10,0x00);//低g检测阈值
+//		ICM_MREG1_WriteRegister(APEX_CONFIG9,0x00);//低g检测阈值
+	ICM_MREG1_WriteRegister(INT_SOURCE6,0xFF);
+}
+
+void ICM_test()
+{
+
+//	ICM_WriteRegister(PWR_MGMT0,0x12);
+//	ICM_WriteRegister(ACCEL_CONFIG0,0x0A);
+//	ICM_WriteRegister(APEX_CONFIG1,0x00);
+//	HAL_Delay(1);
+//	ICM_MREG1_WriteRegister(APEX_CONFIG10,0x49);
+//	ICM_MREG1_WriteRegister(APEX_CONFIG5,0x20);	
+//	ICM_WriteRegister(APEX_CONFIG0,0x01);
+//	HAL_Delay(1);
+//	ICM_WriteRegister(APEX_CONFIG0,0x05);
+//		HAL_Delay(50);
+//	ICM_MREG1_WriteRegister(INT_SOURCE6,0x40);	
+//	ICM_WriteRegister(INT_CONFIG,0x03);		//INT1脉冲模式
+//	ICM_WriteRegister(WOM_CONFIG, 0x03); 
+//			// 配置X轴阈值（ACCEL_WOM_X_THR = 0x4B）
+//		ICM_MREG1_WriteRegister(ACCEL_WOM_X_THR,0x32);
+
+//		// 配置Y轴阈值（ACCEL_WOM_Y_THR = 0x4C）
+//		ICM_MREG1_WriteRegister(ACCEL_WOM_Y_THR,0x32);
+
+//		// 配置Z轴阈值（ACCEL_WOM_Z_THR = 0x4D）
+//		ICM_MREG1_WriteRegister(ACCEL_WOM_Z_THR,0x32);
+printf("test\r\n");
+ICM_MODE_WoM();
+ICM_WriteRegister(PWR_MGMT0, 0x02);
+}

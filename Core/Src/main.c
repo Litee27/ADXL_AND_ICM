@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "i2c.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
@@ -27,6 +28,7 @@
 #include "adxl362.h"
 #include "standby.h"
 #include "ICM.h"
+#include "angle2.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,7 +49,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t counti=0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -72,7 +74,6 @@ int fputc(int ch, FILE *f)
   */
 int main(void)
 {
-	
 
   /* USER CODE BEGIN 1 */
 
@@ -96,31 +97,45 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_SPI1_Init();
+//  MX_SPI1_Init();
   MX_USART1_UART_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
-//	ADXL362_Init();
-	ICM_Init();
-	printf("start!!!\r\n");
+HAL_GPIO_WritePin(GPIOB,GPIO_PIN_2,GPIO_PIN_SET);
 
-	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_2,GPIO_PIN_SET);
-	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_8,GPIO_PIN_SET);
-//	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_3,GPIO_PIN_SET);
-	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,GPIO_PIN_SET);
-
-
-//ADXL362_mode_measure(0x0A,0x05,INT1);
-
-//ADXL362_mode_wakeup(0x1A,0x1E,0x1A,0x1E,INT1);
-
+	printf("start!\r\n");
 HAL_Delay(1000);
-ICM_MODE_WoM();
-uint8_t read=ICM_MREG1_ReadRegister(0x4D);
-printf("read=%2x\r\n",read);
+
+ICM_Init();//ICM初始化
+
+//ICM_MODE_WoM(0x32 ,0x32 ,0x32 );//唤醒模式
+//HAL_Delay(1000);
+ICM_DATA Mydata;
+
+while(1)
+{
+	
+		while(counti<100){
+			ICM_GET_ANGLE();//获取ICM角度
+			printf("ypl****************:\n");
+			printf("roll:%f\npitch:%f\nyaw:%f\n",imu.roll,imu.pitch,imu.yaw);
+			printf("ypl****************:\n");
+		
+			HAL_Delay(10);	
+			counti++;
+		}
+		
+//					ICM_GET_ANGLE();//获取ICM角度
+//			printf("ypl****************:\n");
+//			printf("roll:%f\npitch:%f\nyaw:%f\n",imu.roll,imu.pitch,imu.yaw);
+//			printf("ypl****************:\n");
+//		
+//			HAL_Delay(10);	
+}
+
+//ICM_MODE_WoM(0x32 ,0x32 ,0x32 );//唤醒模式
 //SysEnter_Standby();
-
-
 
 
 
@@ -131,11 +146,7 @@ printf("read=%2x\r\n",read);
   while (1)
   {
     /* USER CODE END WHILE */
-		printf("running...\n");
-//		accel_x_h = ICM_ReadRegister(0x0B);  // 读取高8位
-//		accel_x_l = ICM_ReadRegister(0x0C);  // 读取低8位
-//			printf("x：%02x %02x\r\n",accel_x_h,accel_x_l);
-		HAL_Delay(2000);
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -160,10 +171,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL4;
-  RCC_OscInitStruct.PLL.PLLDIV = RCC_PLL_DIV3;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -173,12 +181,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
     Error_Handler();
   }

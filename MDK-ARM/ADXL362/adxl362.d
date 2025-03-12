@@ -25,6 +25,7 @@ adxl362\adxl362.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_cortex.h
 adxl362\adxl362.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_flash.h
 adxl362\adxl362.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_flash_ex.h
 adxl362\adxl362.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_flash_ramfunc.h
+adxl362\adxl362.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_i2c.h
 adxl362\adxl362.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_pwr.h
 adxl362\adxl362.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_pwr_ex.h
 adxl362\adxl362.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_spi.h
@@ -34,3 +35,5 @@ adxl362\adxl362.o: E:\KEIL\ARM\ARMCC\Bin\..\include\stdio.h
 adxl362\adxl362.o: ../Core/Inc/spi.h
 adxl362\adxl362.o: ../Core/Inc/usart.h
 adxl362\adxl362.o: ../Core/Inc/gpio.h
+adxl362\adxl362.o: ../Core/Inc/icm.h
+adxl362\adxl362.o: ../Core/Inc/i2c.h

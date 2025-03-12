@@ -28,7 +28,7 @@
 extern float scale_factor;
 
 void ADXL362_Init(void);
-uint8_t SPI_TransmitReceive(uint8_t data);
+//uint8_t SPI_TransmitReceive(uint8_t data);
 uint8_t ADXL362_ReadRegister(uint8_t reg);
 void ADXL362_WriteRegister(uint8_t reg, uint8_t value);
 void ADXL362_CS_Select(void);

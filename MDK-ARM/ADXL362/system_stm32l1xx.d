@@ -23,6 +23,7 @@ adxl362\system_stm32l1xx.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_co
 adxl362\system_stm32l1xx.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_flash.h
 adxl362\system_stm32l1xx.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_flash_ex.h
 adxl362\system_stm32l1xx.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_flash_ramfunc.h
+adxl362\system_stm32l1xx.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_i2c.h
 adxl362\system_stm32l1xx.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_pwr.h
 adxl362\system_stm32l1xx.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_pwr_ex.h
 adxl362\system_stm32l1xx.o: ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_spi.h
